@@ -37,10 +37,9 @@
     (.addColumn scanner (to-bytes family) (to-bytes (name c)))))
 
 (defn- get-keys-only-filter []
-  (let [filter-list (FilterList. FilterList$Operator/MUST_PASS_ONE)]
-    (.addFilter filter-list (KeyOnlyFilter.))
-    (.addFilter filter-list (FirstKeyOnlyFilter.))
-    filter-list))
+  (doto (FilterList. FilterList$Operator/MUST_PASS_ONE)
+    (.addFilter (KeyOnlyFilter.))
+    (.addFilter (FirstKeyOnlyFilter.))))
 
 ;; doing one family many columns for now
 (defn scan-filter [{:keys [keys-only? filter family columns starts-with from to time-range reverse? fetch-size]}]
