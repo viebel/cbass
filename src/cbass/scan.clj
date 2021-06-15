@@ -37,7 +37,7 @@
     (.addColumn scanner (to-bytes family) (to-bytes (name c)))))
 
 (defn- get-keys-only-filter []
-  (doto (FilterList. FilterList$Operator/MUST_PASS_ONE)
+  (doto (FilterList. FilterList$Operator/MUST_PASS_ALL)
     (.addFilter (KeyOnlyFilter.))
     (.addFilter (FirstKeyOnlyFilter.))))
 
@@ -59,6 +59,7 @@
                 [set-stop-row! to]
                 [set-time-range! (when (or from-ms to-ms) 
                                    [from-ms to-ms])]]]
+    (println (str "Type: " (type filter)))
     (doall (map (fn [[f p]] 
                   (when p (f scanner p))) params))
     scanner))
