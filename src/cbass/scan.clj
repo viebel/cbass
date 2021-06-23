@@ -19,6 +19,10 @@
         t (or to Long/MAX_VALUE)]
     (.setTimeRange scanner f t)))
 
+(defn- set-max-versions! [^Scan scanner max-versions]
+  (when max-versions
+    (.setMaxVersions scanner max-versions)))
+
 (defn set-filter! [^Scan scanner ^Filter f]
   (when f
     (.setFilter scanner f)))
@@ -59,6 +63,7 @@
                 [set-stop-row! to]
                 [set-time-range! (when (or from-ms to-ms) 
                                    [from-ms to-ms])]]]
+                                 [set-max-versions! max-versions]
     (doall (map (fn [[f p]] 
                   (when p (f scanner p))) params))
     scanner))

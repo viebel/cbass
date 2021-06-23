@@ -546,6 +546,22 @@ user=> (scan conn "galaxy:planet" :family "galaxy"
 
 There are lots of other ways to "scan the cat", but for now here are several.
 
+#### Getting multiple versions 
+
+By default `scan` will return only one version per cell. If you want to receive multiple versions, you need
+to pass `:max-versions`, like this:
+
+```clojure
+user=> (scan conn "galaxy:planet" :family "galaxy" 
+                                  :columns #{:age}
+                                  :max-versions 2)
+
+{"mars" {:age {11234 "4.503 billion years"
+               11000 "4.5 billion years"}},
+ "neptune" {:age {11239 "4.503 billion years"
+                  11200 "4.5 billion years"}}}
+```
+
 #### Getting Lazy
 
 By default `scan` will return a realized (not lazy) result as a map. In case too much data is expected to

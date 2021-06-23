@@ -44,6 +44,18 @@
                       [(result-key kv) v]))]
       (into {:last-updated ts} results))))
 
+(defn hdata->multi-version-map
+  "Return a map where the keys are column names and values are
+   maps of timestamps to column values"
+  [^Result data]
+  (when (.getRow data)
+    (let [results (for [kv (-> (.getMap data) vals first)]
+                    [(result-key kv) (->> (map (fn [[ts v]]
+                                                 [ts (@unpack v)])
+                                               (val kv))
+                                          (into {}))])]
+      (into {} results))))
+
 (defn map->hdata [row-key family columns timestamp]
   (let [^Put p (if timestamp
                  (Put. ^bytes (to-bytes ^String row-key) timestamp)
@@ -54,12 +66,13 @@
         (.add p f-bytes (to-bytes (name k)) v-bytes)))
     p))
 
-(defn results->maps [results row-key-fn {:keys [keys-only?]}]
+(defn results->maps [results row-key-fn {:keys [keys-only? max-versions]}]
   (for [^Result r results]
     [(row-key-fn (.getRow r))
-     (if keys-only?
-       {:last-updated (latest-ts r)}
-       (hdata->map r))]))
+     (cond
+       keys-only?   {:last-updated (latest-ts r)}
+       max-versions (hdata->multi-version-map r)
+       :else        (hdata->map r))]))
 
 (defn without-ts [results]
   (for [[k v] results]
