@@ -147,8 +147,6 @@
    (find-by conn table row-key nil nil))
   ([conn table row-key family]
    (find-by conn table row-key family nil))
-  ([conn table row-key family columns]
-   (find-by conn table row-key family columns nil))
   ([conn table row-key family columns & {:keys [time-range] :as opts}]
    (with-open [^Table h-table (get-table conn table)]
      (let [^Get g (Get. ^bytes (to-bytes ^String row-key))]
