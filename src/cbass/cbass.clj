@@ -32,7 +32,8 @@
     :bytes k
     (throw (IllegalArgumentException. "result-key-type must be one of the following: [:bytes :string :keyword]"))))
 
-(defn result-value [v] (@unpack v))
+(defn result-value [v]
+  (@unpack v))
 
 (defn latest-ts [^Result result]
   (let [cells (.rawCells result)]
@@ -42,12 +43,16 @@
 (defn hdata->map [^Result data {:keys [result-key-type with-ts-per-cell?]
                                 :or {result-key-type :keyword with-ts-per-cell? false}}]
   (when-let [r (.getRow data)]
-    (let [cells (.rawCells data)
-          ts (latest-ts data)
-          results (for [cell cells]
-                    (when-let [v (result-value (.getValueArray cell))]
-                      (let [k (result-key (.getQualifierArray cell) result-key-type)]
-                        [k (if with-ts-per-cell? {:value v :timestamp (.getTimestamp cell)} v)])))]
+    (let [ts (latest-ts data)
+          ; with-ts-per-cell? forces usage in the Cells array instead of getNoVersionMap function
+          results (if with-ts-per-cell?
+                    (for [cell (.rawCells data)]
+                      (when-let [v (result-value (.getValueArray cell))]
+                        (let [k (result-key (.getQualifierArray cell) result-key-type)]
+                          [k (if with-ts-per-cell? {:value v :timestamp (.getTimestamp cell)} v)])))
+                    (for [kv (-> (.getNoVersionMap data) vals first)]
+                      (if-some [v (result-value (val kv))]
+                        [(result-key (key kv) result-key-type) v])))]
       (into {:last-updated ts} results))))
 
 (defn map->hdata [row-key family columns timestamp]
